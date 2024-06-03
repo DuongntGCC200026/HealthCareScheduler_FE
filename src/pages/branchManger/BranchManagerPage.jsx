@@ -9,7 +9,7 @@ import {
     Row,
   } from "react-bootstrap";
   import { Link } from "react-router-dom";
-  import AdminLayout from "../components/layouts/Admin/Manager";
+  import AdminLayout from "../../components/layouts/Admin/Manager";
   
   const ManagePage = () => {
     return (

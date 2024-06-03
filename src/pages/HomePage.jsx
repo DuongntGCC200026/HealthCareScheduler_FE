@@ -8,23 +8,305 @@ import {
   Form,
   Modal,
   Row,
+  Spinner,
 } from "react-bootstrap";
 import FullLayout from "../components/layouts/User/Full";
-import { Link } from "react-router-dom";
-import React, { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import handleError from "../services/HandleErrors";
+import serviceApi from "../api/service";
+import branchApi from "../api/branch";
+import authService from "../services/AuthService";
+import appointmentApi from "../api/appointment";
+import formatDateTime from "../services/FormatDateTime";
+import * as yup from "yup";
+import swalService from "../services/SwalService";
 
 function HomePage() {
-  const [show, setShowModal] = useState(false);
+  const [services, setServices] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [userData, setUserData] = useState(null);
 
-  const handleShow = () => {
-    setShowModal(!show);
-  };
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    appointmentId: "",
+    userId: "",
+    dateTime: "",
+    branchId: "",
+    noted: "",
+    serviceId: "",
+    status: "",
+    createdDate: "",
+    termAndCondition: false,
+  });
+  const [error, setError] = useState({});
 
   const handleClose = () => {
     setShowModal(false);
+    setError({});
+    setFormData({
+      appointmentId: "",
+      userId: "",
+      dateTime: "",
+      branchId: "",
+      noted: "",
+      serviceId: "",
+      status: "",
+      createdDate: "",
+      termAndCondition: false,
+    });
   };
+
+  const [show, setShowModal] = useState(false);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleCheckboxChange = (event) => {
+    setFormData({
+      ...formData,
+      termAndCondition: event.target.checked,
+    });
+  };
+
+  // Form
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      let modifiedSchema = yup.object().shape({
+        dateTime: yup
+          .date()
+          .required("Date of Birth is required")
+          .min(new Date(), "Date must be in the future"),
+        branchId: yup.string().required("Branch is required"),
+        serviceId: yup.string().required("Service is required"),
+        termAndCondition: yup
+          .boolean()
+          .oneOf([true], "You must accept the terms"),
+      });
+      await modifiedSchema.validate(formData, { abortEarly: false });
+
+      setIsLoading(true);
+      try {
+        const AppointmentData = {
+          patientId: userData.userId,
+          doctorId: null,
+          serviceId: formData.serviceId,
+          branchId: formData.branchId,
+          dateTime: formData.dateTime,
+          status: "Pending",
+          createdDate: new Date(),
+          noted: formData.noted,
+        };
+        console.log(AppointmentData);
+        await appointmentApi.AddNew(AppointmentData);
+        handleClose();
+        swalService.showMessage(
+          "Success",
+          "Appointment added successfully",
+          "success"
+        );
+      } catch (error) {
+        handleError.showError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      const newError = {};
+      error.inner.forEach((e) => {
+        newError[e.path] = e.message;
+      });
+      setError(newError);
+    }
+  };
+
+  const isAuthenticated = () => {
+    return authService.isLogin();
+  };
+
+  const isDoctor = () => {
+    return authService.getUserRole() === "Doctor";
+  };
+
+  const isBranchManager = () => {
+    return authService.getUserRole() === "BranchManagement";
+  };
+
+  const isAdmin = () => {
+    return authService.getUserRole() === "Administrator";
+  };
+
+  const handleShow = () => {
+    if (isAuthenticated()) {
+      setShowModal(!show);
+    } else {
+      navigate("/login");
+    }
+  };
+
+  if (isAuthenticated()) {
+    if (isDoctor()) {
+      return <Navigate to="/admin/performMedical" />;
+    }
+    if (isBranchManager()) {
+      return <Navigate to="/admin/appointment" />;
+    }
+    if (isBranchManager()) {
+      return <Navigate to="/admin/appointment" />;
+    }
+    if (isAdmin()) {
+      return <Navigate to="/admin/user" />;
+    }
+  }
+
+  // const isBranchManager = () => {
+  //   return authService.getUserRole() === "BranchManagement";
+  // };
+
+  // const isAdministrator = () => {
+  //   return authService.getUserRole() === "Administrator";
+  // };
+  // if (isAuthenticated()) {
+  //   if (isDoctor()) {
+  //     return <Navigate to="/admin/performMedical" />;
+  //   } else if (isBranchManager()) {
+  //     return <Navigate to="/admin/manageAppointment" />;
+  //   } else if (isAdministrator()) {
+  //     return <Navigate to="/admin/user" />;
+  //   } else {
+  //     console.log(authService.getUserRole());
+
+  //     return <Navigate to="/" />;
+  //   }
+  // }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const user = authService.getUserData();
+        setUserData(user);
+        const service = await serviceApi.getAll();
+        setServices(service);
+        const branch = await branchApi.getAll();
+        setBranches(branch);
+      } catch (error) {
+        handleError.showError(error);
+      }
+    };
+
+    fetchData();
+  }, []);
   return (
     <FullLayout>
+      <Modal
+        show={show}
+        onHide={handleClose}
+        backdrop="static"
+        keyboard={false}
+        centered
+        size="lg"
+      >
+        <form onSubmit={handleSubmit}>
+          <Modal.Header closeButton>
+            <Modal.Title className="text-center">
+              Make an Appointment
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-3">
+              <label>Select Branch</label>
+              <select
+                name="branchId"
+                className={`form-control ${error.branchId ? "is-invalid" : ""}`}
+                aria-label="Default select example"
+                onChange={handleChange}
+              >
+                <option value="">-- Please choose branch --</option>
+                {branches.map((branch, index) => (
+                  <option key={index} value={branch.branchId}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+              <div className="invalid-feedback">{error.branchId}</div>
+            </div>
+
+            <div className="mb-3">
+              <label>Select Service</label>
+              <select
+                name="serviceId"
+                className={`form-control ${
+                  error.serviceId ? "is-invalid" : ""
+                }`}
+                aria-label="Default select example"
+                onChange={handleChange}
+              >
+                <option value="">-- Please choose service --</option>
+                {services.map((service, index) => (
+                  <option key={index} value={service.serviceId}>
+                    {service.serviceName}
+                  </option>
+                ))}
+              </select>
+              <div className="invalid-feedback">{error.serviceId}</div>
+            </div>
+
+            <div className="mb-3">
+              <label>Date and Time</label>
+              <input
+                type="datetime-local"
+                name="dateTime"
+                className={`form-control ${error.dateTime ? "is-invalid" : ""}`}
+                onChange={handleChange}
+              ></input>
+              <div className="invalid-feedback">{error.dateTime}</div>
+            </div>
+
+            <div className="mb-3">
+              <label>Noted</label>
+              <textarea
+                name="noted"
+                className="form-control"
+                rows={4}
+                onChange={handleChange}
+              ></textarea>
+            </div>
+
+            <div className="mb-3">
+              <input
+                type="checkbox"
+                name="termAndCondition"
+                onChange={handleCheckboxChange}
+                className={`ms-2 ${error.termAndCondition ? "is-invalid" : ""}`}
+              ></input>
+              <label className="ms-3">
+                Please bring your medical history (if any) and arrive 15 minutes
+                early.
+              </label>
+              <div className="invalid-feedback">{error.termAndCondition}</div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              Close
+            </Button>
+            <Button variant="info" type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <Spinner animation="border" variant="dark" />
+              ) : (
+                "Submit"
+              )}
+            </Button>
+          </Modal.Footer>
+        </form>
+      </Modal>
       <section className="m-5">
         <Row className="mt-5 py-5">
           <Col
@@ -52,98 +334,6 @@ function HomePage() {
                   <Button onClick={handleShow} variant="outline-info" size="lg">
                     MAKE AN APPOINTMENT NOW
                   </Button>
-                  <Modal
-                    show={show}
-                    onHide={handleClose}
-                    backdrop="static"
-                    keyboard={false}
-                    centered
-                    size="lg"
-                  >
-                    <Modal.Header closeButton>
-                      <Modal.Title className="text-center">
-                        Make an Appointment
-                      </Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                      <form action="">
-                        <div className="mb-3">
-                          <label>Email</label>
-                          <input
-                            type="email"
-                            name="email"
-                            className="form-control"
-                          />
-                          <div className="invalid-feedback"></div>
-                        </div>
-
-                        <div className="mb-3">
-                          <label>Select Branch</label>
-                          <select
-                            type="email"
-                            name="email"
-                            className="form-control"
-                          >
-                            <option value="option1">-- No Chosen --</option>
-                            <option value="option2">Option 2</option>
-                            <option value="option3">Option 3</option>
-                            <option value="option4">Option 4</option>
-                          </select>
-                          <div className="invalid-feedback"></div>
-                        </div>
-
-                        <div className="mb-3">
-                          <label>Select Service</label>
-                          <select className="form-control">
-                            <option value="option1">-- No Chosen --</option>
-                            <option value="option2">Option 2</option>
-                            <option value="option3">Option 3</option>
-                            <option value="option4">Option 4</option>
-                          </select>
-                          <div className="invalid-feedback"></div>
-                        </div>
-
-                        <div className="mb-3">
-                          <label>Date and Time</label>
-                          <input
-                            type="datetime-local"
-                            id="meetingDate"
-                            name="meetingDate"
-                            className="form-control"
-                          ></input>
-                          <div className="invalid-feedback"></div>
-                        </div>
-
-                        <div className="mb-3">
-                          <label>Note</label>
-                          <textarea
-                            className="form-control"
-                            rows={4}
-                          ></textarea>
-                          <div className="invalid-feedback"></div>
-                        </div>
-
-                        <div className="mb-3">
-                          <input
-                            type="checkbox"
-                            id="myCheckbox"
-                            name="myCheckbox"
-                            value="yes"
-                          ></input>
-                          <label className="ms-2">
-                            Please bring your medical history (if any) and
-                            arrive 15 minutes early.
-                          </label>
-                        </div>
-                      </form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                      <Button variant="secondary" onClick={handleClose}>
-                        Close
-                      </Button>
-                      <Button variant="primary">Confirm</Button>
-                    </Modal.Footer>
-                  </Modal>
                 </div>
                 <div>
                   <Link to="/about">
@@ -209,11 +399,7 @@ function HomePage() {
                 range of tests to help you monitor and maintain your well-being.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
         </Row>
         <Row className="mt-5">
@@ -236,11 +422,7 @@ function HomePage() {
                 intervention.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
         </Row>
         <Row className="mt-5">
@@ -261,11 +443,7 @@ function HomePage() {
                 interventions.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
           <section>
             <div className="me-5 d-flex justify-content-center alignItems-center">

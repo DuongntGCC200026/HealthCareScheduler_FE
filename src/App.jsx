@@ -7,15 +7,22 @@ import ServicesPage from "./pages/ServicesPage";
 import AboutPage from "./pages/AboutPage";
 import LoginPage from "./pages/LoginPage";
 import Register from "./pages/RegisterPgae";
-import AdminPage from "./pages/AdminPage";
-import BranchPage from "./pages/BranchPage";
-import AccountPage from "./pages/AccountPage";
-import DoctorPage from "./pages/DoctorPage";
-import ManagePage from "./pages/ManagePage";
-import AppointmentPage from "./pages/ApponintmentPage";
+import AdminPage from "./pages/admin/AdminPage";
+import BranchManagementPage from "./pages/admin/BranchManagementPage";
+import ServiceManagementPage from "./pages/admin/ServiceManagementPage";
+import UserManagementPage from "./pages/admin/UserManagementPage";
+import DoctorPage from "./pages/branchManger/DoctorPage";
+// import ManagePage from "./pages/branchManger/BranchManagerPage";
+import AppointmentManagementPage from "./pages/branchManger/ApponintmentManagementPage";
+import MyAppointmentPage from "./pages/MyAppointmentPage";
 import PatientPage from "./pages/PatientPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import ProfilePage from "./pages/ProfilePage";
+import AdminProtected from "../src/components/layouts/Admin/AdminProtected";
+import BranchProtected from "../src/components/layouts/Admin/BranhManagerProtected";
+import DoctorProtected from "../src/components/layouts/Admin/DoctorProtected";
+import PerformMedicalPage from "./pages/doctor/PerformMedicalPage";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 // import FeedbackPage from './pages/FeedbackPage';
 
@@ -50,39 +57,83 @@ function App() {
       element: <ProfilePage />,
     },
     {
+      path: "/myAppointment",
+      element: <MyAppointmentPage />,
+    },
+    {
       path: "/admin",
       children: [
         {
           path: "dashboard",
-          element: <AdminPage />,
+          element: (
+            <AdminProtected>
+              <AdminPage />
+            </AdminProtected>
+          ),
         },
         {
           path: "branch",
-          element: <BranchPage />,
+          element: (
+            <AdminProtected>
+              <BranchManagementPage />
+            </AdminProtected>
+          ),
         },
         {
-          path: "account",
-          element: <AccountPage />,
+          path: "service",
+          element: (
+            <AdminProtected>
+              <ServiceManagementPage />
+            </AdminProtected>
+          ),
         },
         {
-          path: "manager",
-          element: <ManagePage />,
+          path: "user",
+          element: (
+            <AdminProtected>
+              <UserManagementPage />
+            </AdminProtected>
+          ),
         },
+        // {
+        //   path: "manager",
+        //   element: <ManagePage />,
+        // },
         {
           path: "appointment",
-          element: <AppointmentPage />,
+          element: (
+            <BranchProtected>
+              <AppointmentManagementPage />
+            </BranchProtected>
+          ),
         },
         {
           path: "doctor",
-          element: <DoctorPage />,
+          element: (
+            <BranchProtected>
+              <DoctorPage />
+            </BranchProtected>
+          ),
         },
         {
           path: "patient",
-          element: <PatientPage />,
+          element: (
+            <BranchProtected>
+              <PatientPage />
+            </BranchProtected>
+          ),
         },
         {
           path: "feedback",
           element: <FeedbackPage />,
+        },
+        {
+          path: "performMedical",
+          element: (
+            <DoctorProtected>
+              <PerformMedicalPage />
+            </DoctorProtected>
+          ),
         },
       ],
     },

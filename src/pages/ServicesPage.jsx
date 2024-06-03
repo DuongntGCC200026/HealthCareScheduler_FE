@@ -81,11 +81,7 @@ function ServicesPage() {
                 range of tests to help you monitor and maintain your well-being.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
         </Row>
         <Row className="mt-5">
@@ -107,11 +103,7 @@ function ServicesPage() {
                 intervention.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
         </Row>
         <Row className="mt-5">
@@ -133,11 +125,7 @@ function ServicesPage() {
                 of life.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
         </Row>
         <Row className="mt-5">
@@ -159,11 +147,7 @@ function ServicesPage() {
                 address them.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
         </Row>
         <Row className="mt-5">
@@ -185,11 +169,7 @@ function ServicesPage() {
                 treatment planning.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
         </Row>
         <Row className="mt-5">
@@ -210,11 +190,7 @@ function ServicesPage() {
                 ranking.
               </h5>
             </div>
-            <div className="mt-4">
-              <Button onClick={handleShow} variant="outline-info" size="lg">
-                SCHEDULE AN EXAMINATION
-              </Button>
-            </div>
+            
           </Col>
         </Row>
       </Container>

@@ -2,13 +2,28 @@ import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import SideBar from "./SidebarManager";
 import "./Admin.css";
+import {
+  Button,
+  Container,
+  Image,
+  Nav,
+  Navbar,
+  Offcanvas,
+} from "react-bootstrap";
+import authService from "../../../services/AuthService";
+import swalService from "../../../services/SwalService";
 
 const ManagerLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+  const [userData, setUserData] = useState({});
+  const navigate = useNavigate();
+
   useEffect(() => {
-    // const user = authService.getUserData();
-    // setUserData(user);
+    const fetchUserData = async () => {
+      const user = await authService.getUserRole();
+      setUserData(user);
+    };
+    fetchUserData();
 
     // Check initial screen width
     if (window.innerWidth < 1200) {
@@ -31,8 +46,15 @@ const ManagerLayout = ({ children }) => {
       setIsSidebarOpen(true);
     }
   };
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+  const handleLogout = () => {
+    swalService.confirmToHandle(
+      "Are you sure you want to logout?",
+      "warning",
+      () => {
+        authService.logout();
+        navigate("/");
+      }
+    );
   };
   return (
     <>
@@ -47,52 +69,41 @@ const ManagerLayout = ({ children }) => {
           >
             <img src="/image/logo.png" alt="" />
           </Link>
-          <i
-            className="bi bi-list toggle-sidebar-btn"
-            onClick={toggleSidebar}
-          ></i>
         </div>
 
-        <nav className="header-nav ms-auto">
-          <ul className="d-flex align-items-center">
-            <li className="nav-item dropdown pe-3">
-              <a
-                className="nav-link nav-profile d-flex align-items-center pe-0"
-                href="#"
-                data-bs-toggle="dropdown"
-              >
-                <span className="d-none d-md-block dropdown-toggle ps-2">
-                  Hiiii
-                </span>
+        <nav className="header-nav ms-auto me-4">
+          <div className="dropdown">
+            <button
+              className="btn btn-light dropdown-toggle"
+              type="button"
+              id="dropdownMenuButton"
+              //boostrap 5 MUST HAVE -bs
+              data-bs-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              <a className="text-center me-3 fw-bold text-secondary" href="#">
+                Hi,
+                {"  " + userData}
               </a>
+              <Image
+                src="/image/user.png"
+                width={30}
+                height={30}
+                roundedCircle
+              />
+            </button>
+            <div
+              className="dropdown-menu mt-2"
+              aria-labelledby="dropdownMenuButton"
+            >
 
-              <ul className="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
-                <li>
-                  <Link
-                    className="dropdown-item d-flex align-items-center"
-                    to="/profile"
-                  >
-                    <i className="bi bi-person"></i>
-                    <span>My Profile</span>
-                  </Link>
-                </li>
-                <li>
-                  <hr className="dropdown-divider" />
-                </li>
-
-                <li>
-                  <a
-                    className="dropdown-item d-flex align-items-center"
-                    // style={{ cursor: "pointer" }}
-                    // onClick={handleLogout}
-                  >
-                    <i className="bi bi-box-arrow-right"></i>
-                    <span>Sign Out</span>
-                  </a>
-                </li>
-              </ul>
-            </li>
-          </ul>
+              <a className="dropdown-item" onClick={handleLogout}>
+                <i className="bi bi-door-open-fill me-3"></i>
+                Logout
+              </a>
+            </div>
+          </div>
         </nav>
       </header>
       {isSidebarOpen && <SideBar />}

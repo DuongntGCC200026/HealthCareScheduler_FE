@@ -18,20 +18,14 @@ const SideBar = () => {
         </li>
 
         <li className="nav-item">
-          <Link className="nav-link collapsed" to="/admin/branch">
+          <Link className="nav-link collapsed" to="/admin/service">
             <span>Service</span>
           </Link>
         </li>
 
         <li className="nav-item">
-          <Link className="nav-link collapsed" to="/admin/branch">
+          <Link className="nav-link collapsed" to="/admin/user">
             <span>User</span>
-          </Link>
-        </li>
-
-        <li className="nav-item">
-          <Link className="nav-link collapsed" to="/admin/branch">
-            <span>Feedback</span>
           </Link>
         </li>
       </ul>
